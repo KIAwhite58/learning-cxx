@@ -1,6 +1,8 @@
-#include "../exercise.h"
+﻿#include "../exercise.h"
 #include <cstring>
+#include <array>
 #include <algorithm>
+// READ: 类模板 <https://zh.cppreference.com/w/cpp/language/class_template>
 
 template<class T>
 struct Tensor4D {
@@ -9,79 +11,52 @@ struct Tensor4D {
 
     Tensor4D(unsigned int const shape_[4], T const *data_) {
         unsigned int size = 1;
-        std::memcpy(shape, shape_, sizeof(shape));
-        for (unsigned int i = 0; i < 4; ++i) {
-            size *= shape[i];
+        // TODO: 填入正确的 shape 并计算 size
+        for (int i = 0; i < 4; ++i) {
+            size *= shape_[i];
+            shape[i] = shape_[i];
         }
-        data = new T[size];
-        std::memcpy(data, data_, size * sizeof(T));
-    }
 
+        data = new T[size];
+        memcpy(data, data_, size * sizeof(T));
+    }
     ~Tensor4D() {
         delete[] data;
     }
 
-    // 禁止复制和移动
+    // 为了保持简单，禁止复制和移动
     Tensor4D(Tensor4D const &) = delete;
     Tensor4D(Tensor4D &&) noexcept = delete;
 
+    // 这个加法需要支持“单向广播”。
+    // 具体来说，`others` 可以具有与 `this` 不同的形状，形状不同的维度长度必须为 1。
+    // `others` 长度为 1 但 `this` 长度不为 1 的维度将发生广播计算。
+    // 例如，`this` 形状为 `[1, 2, 3, 4]`，`others` 形状为 `[1, 2, 1, 4]`，
+    // 则 `this` 与 `others` 相加时，3 个形状为 `[1, 2, 1, 4]` 的子张量各自与 `others` 对应项相加。
     Tensor4D &operator+=(Tensor4D const &others) {
-        // 检查是否可以进行广播
-        for (int i = 0; i < 4; ++i) {
-            if (shape[i] != others.shape[i] && others.shape[i] != 1) {
-                throw std::invalid_argument("Shapes are not compatible for broadcasting");
+        // TODO: 实现单向广播的加法
+        for (size_t firstDim = 0; firstDim < shape[0]; ++firstDim) {
+            size_t otherFirstDim = (shape[0] > others.shape[0]) ? 0 : firstDim;
+            for (size_t secondDim = 0; secondDim < shape[1]; ++secondDim) {
+                size_t otherSecondDim = (shape[1] > others.shape[1]) ? 0 : secondDim;
+                for (size_t thirdDim = 0; thirdDim < shape[2]; ++thirdDim) {
+                    size_t otherThirdDim = (shape[2] > others.shape[2]) ? 0 : thirdDim;
+                        for (size_t fourthDim = 0; fourthDim < shape[3]; ++fourthDim) {
+                                size_t otherFourthDim = (shape[3] > others.shape[3]) ? 0 : fourthDim;
+                                size_t thisIndex = firstDim * shape[3] * shape[1] * shape[2] +
+                                                    secondDim * shape[3] * shape[2] +
+                                                    thirdDim * shape[3] +
+                                                    fourthDim;
+                                size_t otherIndex = otherFirstDim * others.shape[3] * others.shape[1] * others.shape[2] +
+                                                    otherSecondDim * others.shape[3] * others.shape[2] +
+                                                    otherThirdDim * others.shape[3] +
+                                                    otherFourthDim;
+                                data[thisIndex] += others.data[otherIndex];
+                        }
+                }
             }
         }
-
-        unsigned int strides[4];
-        unsigned int other_strides[4];
-        strides[3] = 1;
-        other_strides[3] = 1;
-
-        for (int i = 2; i >= 0; --i) {
-            strides[i] = strides[i + 1] * shape[i + 1];
-            other_strides[i] = other_strides[i + 1] * (others.shape[i + 1] == 1 ? shape[i + 1] : others.shape[i + 1]);
-        }
-
-        unsigned int size = 1;
-        for (int i = 0; i < 4; ++i) {
-            size *= shape[i];
-        }
-
-        // 执行加法操作
-        for (unsigned int i = 0; i < size; ++i) {
-            unsigned int indices[4];
-            unsigned int temp = i;
-            for (int j = 3; j >= 0; --j) {
-                indices[j] = temp / strides[j];
-                temp %= strides[j];
-            }
-
-            unsigned int other_indices[4];
-            for (int j = 0; j < 4; ++j) {
-                other_indices[j] = (others.shape[j] == 1) ? indices[j] : indices[j] % others.shape[j];
-            }
-
-            unsigned int other_index = 0;
-            for (int j = 0; j < 4; ++j) {
-                other_index += other_indices[j] * other_strides[j];
-            }
-
-            data[i] += others.data[other_index];
-        }
-
         return *this;
-    }
-
-    // NOTICE: 不要修改这个方法
-    size_t operator[](int i) const {
-        ASSERT(i <= cached, "i out of range");
-        return cache[i];
-    }
-
-    // NOTICE: 不要修改这个方法
-    bool is_alive() const {
-        return cache;
     }
 };
 
