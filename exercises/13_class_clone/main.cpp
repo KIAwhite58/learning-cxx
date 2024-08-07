@@ -19,10 +19,12 @@ public:
         cache = other.cache;
         cached = other.cached;
     }
-
     // TODO: 实现析构器，释放缓存空间
     ~DynFibonacci() {
-        delete[] cache;
+        if (cache != NULL && *cache != NULL) {
+            delete [] cache;
+            delete cache;
+        }
     }
 
     // TODO: 实现正确的缓存优化斐波那契计算
