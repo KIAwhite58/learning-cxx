@@ -10,8 +10,8 @@ class DynFibonacci {
 
 public:
     // TODO: 实现动态设置容量的构造器
-    DynFibonacci(int capacity): cache(new size_t[capacity]), cached(2), capacity(capacity) {
-        cache[0] = 0, cache[1] = 1;
+    DynFibonacci(int capacity): cache(new size_t[capacity]), cached(2) {
+        cache[1] = 1;
     }
 
     // TODO: 实现复制构造器
