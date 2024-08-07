@@ -36,9 +36,12 @@ struct Tensor {
 private:
     unsigned int data_index(unsigned int const indices[N]) const {
         unsigned int index = 0;
-        for (unsigned int i = 0; i < N; ++i) {
+        unsigned int stride = 1;
+        // 从最后一个维度到第一个维度
+        for (int i = N - 1; i >= 0; --i) {
             ASSERT(indices[i] < shape[i], "Invalid index");
-            // TODO: 计算 index
+            index += indices[i] * stride;
+            stride *= shape[i];
         }
         return index;
     }
