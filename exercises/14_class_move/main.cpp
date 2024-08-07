@@ -59,6 +59,12 @@ public:
 
 
     // NOTICE: 不要修改这个方法
+    size_t operator[](int i) const {
+        ASSERT(i <= cached, "i out of range");
+        return cache[i];
+    }
+
+    // NOTICE: 不要修改这个方法
     bool is_alive() const {
         return cache;
     }
